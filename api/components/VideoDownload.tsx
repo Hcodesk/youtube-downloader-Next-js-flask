@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { AlertCircle, Check } from "lucide-react"
+import { AlertCircle, Check, Download, LinkIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -15,13 +15,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function VideoDownloader() {
-  const [videoUrl, setVideoUrl] = useState("") // State to store the video URL
-  const [format, setFormat] = useState("mp4") // State to store the selected format
-  const [thumbnailUrl, setThumbnailUrl] = useState("") // State to store the thumbnail URL
-  const [progress, setProgress] = useState(0) // State to store the download progress
+  const [videoUrl, setVideoUrl] = useState("")
+  const [format, setFormat] = useState("mp4")
+  const [thumbnailUrl, setThumbnailUrl] = useState("")
+  const [progress, setProgress] = useState(0)
   const [isDownloading, setIsDownloading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [videoInfo, setVideoInfo] = useState<{
+    title: string
+    views: string
+    channel: string
+    duration: string
+  } | null>(null)
 
   // Function to validate URL
   const isValidUrl = (url: string) => {
@@ -36,15 +42,23 @@ export default function VideoDownloader() {
   // Function to fetch thumbnail (simplified for demo)
   useEffect(() => {
     if (videoUrl && isValidUrl(videoUrl)) {
-      // In a real app, you would fetch the actual thumbnail from an API
-      // This is a simplified example that just uses a placeholder
+      // In a real app, you would fetch the actual video info from an API
+      // This is a simplified example that just uses placeholder data
       setThumbnailUrl(`/placeholder.svg?height=180&width=320`)
+      setVideoInfo({
+        title: "How to Build Amazing Web Applications with React",
+        views: "1.4M",
+        channel: "Web Dev Mastery",
+        duration: "15:42",
+      })
       setError("")
     } else if (videoUrl) {
       setThumbnailUrl("")
+      setVideoInfo(null)
       setError("Please enter a valid URL")
     } else {
       setThumbnailUrl("")
+      setVideoInfo(null)
       setError("")
     }
   }, [videoUrl])
@@ -115,53 +129,75 @@ export default function VideoDownloader() {
   }
 
   return (
-    <Card>
-      <CardContent className="pt-6">
+    <Card className="overflow-hidden border-0 shadow-xl bg-white/80 backdrop-blur-sm max-w-[900px] ">
+      <div className="h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+      <CardContent className="p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="video-url">Video URL</Label>
-            <Input
-              id="video-url"
-              type="text"
-              placeholder="https://example.com/video"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              disabled={isDownloading}
-            />
+            <Label htmlFor="video-url" className="text-sm font-medium text-gray-700">
+              Video URL
+            </Label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <LinkIcon className="h-4 w-4 text-gray-400" />
+              </div>
+              <Input
+                id="video-url"
+                type="text"
+                placeholder="https://example.com/video"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                disabled={isDownloading}
+                className="pl-10 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="format">Download Format</Label>
-            <Select value={format} onValueChange={setFormat} disabled={isDownloading}>
-              <SelectTrigger id="format">
-                <SelectValue placeholder="Select format" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="mp4">MP4</SelectItem>
-                <SelectItem value="mp3">MP3</SelectItem>
-                <SelectItem value="webm">WebM</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {thumbnailUrl && (
-            <div className="space-y-2">
-              <Label>Video Thumbnail</Label>
-              <div className="relative rounded-md overflow-hidden w-full h-[180px]">
-                <Image src={thumbnailUrl || "/placeholder.svg"} alt="Video thumbnail" fill className="object-cover" />
+          {videoInfo && (
+            <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
+              <div className="flex flex-col sm:flex-row">
+                <div className="relative w-full sm:w-48 h-36">
+                  <Image src={thumbnailUrl || "/placeholder.svg"} alt="Video thumbnail" fill className="object-cover" />
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
+                    {videoInfo.duration}
+                  </div>
+                </div>
+                <div className="p-4 flex-1">
+                  <h3 className="font-medium text-lg line-clamp-2">{videoInfo.title}</h3>
+                  <p className="text-gray-500 text-sm mt-1">{videoInfo.channel}</p>
+                  <div className="flex items-center mt-2 text-sm text-gray-500">
+                    <span>{videoInfo.views} views</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
+          <div className="space-y-2">
+            <Label htmlFor="format" className="text-sm font-medium text-gray-700">
+              Download Format
+            </Label>
+            <Select value={format} onValueChange={setFormat} disabled={isDownloading}>
+              <SelectTrigger id="format" className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                <SelectValue placeholder="Select format" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mp4">MP4 Video</SelectItem>
+                <SelectItem value="mp3">MP3 Audio</SelectItem>
+                <SelectItem value="webm">WebM Video</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-800">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {success && (
-            <Alert className="bg-green-50 text-green-800 border-green-200">
+            <Alert className="border-green-200 bg-green-50 text-green-800">
               <Check className="h-4 w-4" />
               <AlertDescription>Download completed successfully!</AlertDescription>
             </Alert>
@@ -170,15 +206,25 @@ export default function VideoDownloader() {
           {isDownloading && (
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label>Downloading...</Label>
-                <span>{progress}%</span>
+                <Label className="text-sm font-medium text-gray-700">Downloading...</Label>
+                <span className="text-sm font-medium text-indigo-600">{progress}%</span>
               </div>
               <Progress value={progress} className="h-2" />
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isDownloading || !videoUrl}>
-            {isDownloading ? "Downloading..." : "Download"}
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-md transition-all duration-200 shadow-md hover:shadow-lg"
+            disabled={isDownloading || !videoUrl || !videoInfo}
+          >
+            {isDownloading ? (
+              <span className="flex items-center justify-center">Downloading...</span>
+            ) : (
+              <span className="flex items-center justify-center">
+                <Download className="mr-2 h-4 w-4" /> Download Now
+              </span>
+            )}
           </Button>
         </form>
       </CardContent>

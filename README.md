@@ -76,3 +76,39 @@ To learn more about Next.js, take a look at the following resources:
 - [Flask Documentation](https://flask.palletsprojects.com/en/1.1.x/) - learn about Flask features and API.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+
+## Starter form 
+<main>
+      <form action="http://127.0.0.1:5328/download" method="POST">
+        <label htmlFor="video_url">Video URL:</label>
+        <input type="text" id="video_url" name="video_url" required />
+        <button type="submit">Download</button>
+      </form>
+      <p>Please enter a valid video URL to download.</p>
+</main>
+
+## Starter api flask
+from flask import Flask , request
+import yt_dlp
+
+app = Flask(__name__)
+ydl_opts = {
+    'outtmpl': 'downloads/%(title)s.%(ext)s'
+}
+
+def dwl_vid(video_url):
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([video_url])
+
+@app.route('/download', methods=['POST'])
+def download_video():
+    video_url = request.form.get('video_url')
+    if not video_url:
+        return "No video URL provided", 400
+    final_url = video_url.strip()
+    dwl_vid(final_url)
+    return "Video Downloaded Successfully", 200
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
